@@ -2,7 +2,7 @@
   "name": "CommunityMOD",
   "version": "1.0.0",
   "author": "monoculero",
-  "description": "My cabinet personal theme based on Trinidad original theme fonr VpinFE and the community",
+  "description": "My cabinet personal theme based on Trinidad original theme for VpinFE",
   "layouts": {"cab": "preview.png", "desktop": "preview-desktop.png"},
   "change_log": "",
   "min_vpinfe": "3.0",
