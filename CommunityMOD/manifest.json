@@ -1,0 +1,10 @@
+{
+  "name": "CommunityMOD",
+  "version": "1.0.0",
+  "author": "monoculero",
+  "description": "My cabinet personal theme based on Trinidad original theme fonr VpinFE and the community",
+  "layouts": {"cab": "preview.png", "desktop": "preview-desktop.png"},
+  "change_log": "",
+  "min_vpinfe": "3.0",
+  "windows": ["playfield"]
+}
