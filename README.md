@@ -1,6 +1,6 @@
 # CommunityMOD
 
-A theme only for a cabinet. 
+A theme only for a cabinet, based on Trinidad original theme. 
 
 ![CommunityMOD on a cabinet](preview.png)
 
