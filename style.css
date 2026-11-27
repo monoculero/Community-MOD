@@ -1,3 +1,5 @@
+/* Trinidad - Wheels lowered further, centered bottom texts, and bottom-left instructions box. */
+
 @font-face {
   font-family: "Rocket Command Expanded";
   src: url("fonts/RocketCommandExpanded-DYA5m.otf") format("opentype");
@@ -173,6 +175,27 @@ body {
   box-shadow: 0 0 2cqmin rgba(47, 210, 255, 0.24);
 }
 
+/* --- Letra única encima de la bola de selección principal ----------------------- */
+.nav-letter {
+  position: absolute;
+  bottom: 44cqmin;   /* Subido (antes 13.5cqmin) */
+  left: 50%;
+  width: 10.5cqw;     /* Más ancha (antes 6.5cqw) */
+  height: 18.5cqmin; /* Más alta (antes 9.5cqmin) */
+  object-fit: contain;
+  opacity: 0;
+  transform: translateX(-50%) translateY(0.8cqmin) scale(0.9);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  filter: drop-shadow(0 0.3cqmin 1.1cqmin rgba(0, 0, 0, 0.95));
+  pointer-events: none;
+  z-index: 6;
+}
+
+.nav-letter.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
 /* --- The panel (Contenedor base transparente) ------------------------------------- */
 .panel {
   position: absolute;
@@ -247,6 +270,30 @@ body {
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
+/* --- Miniatura del cabinet encima del título de la mesa ----------------------- */
+.table-cabinet {
+  position: absolute;
+  bottom: 14.5cqmin;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14cqw;
+  height: 11cqmin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.table-cabinet img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 0.25cqmin;
+  filter: drop-shadow(0 0.25cqmin 0.9cqmin rgba(0, 0, 0, 0.95));
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
 /* --- Logo del fabricante con medidas en cm --- */
 .manufacturer-logo {
   position: absolute;
@@ -300,9 +347,10 @@ body {
 }
 
 .panel h1 {
-  bottom: 10cqmin;  /* Antes 8.6cqmin -> sube el título */
+  bottom: 11.5cqmin;  /* Antes 8.6cqmin -> sube el título */
+  width: 48cqw;     /* Ancho específico solo para el nombre de la mesa */
   font-family: "Rocket Command Expanded", "Trebuchet MS", Arial, sans-serif;
-  font-size: 2.3cqw;
+  font-size: 2.1cqw; /* Opcional: bajar de 2.3cqw a 2.1cqw si tienes títulos muy largos */
   text-transform: uppercase;
   color: #f5f7fb;
   text-shadow:
@@ -344,6 +392,7 @@ body {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-shadow: 0 0.2cqmin 0.8cqmin rgba(0, 0, 0, 0.95);
+  width: 56cqw;
 }
 
 .facts i {

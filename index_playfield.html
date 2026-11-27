@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VPinFE - CommunityMOD</title>
+  <title>VPinFE - Trinidad</title>
   <!-- Core's stylesheet comes first so style.css can restyle what it provides:
        the layout classes, the loading indicator and the hold ring. -->
   <link rel="stylesheet" href="/core/common/vpinfe-style.css" />
@@ -22,8 +22,14 @@
          theme.js fills it. -->
     <ol id="wheels" class="wheels"></ol>
 
+    <!-- Letra inicial sobre la bola de selección principal al cambiar de letra -->
+    <img id="nav-letter" class="nav-letter" src="" alt="" hidden />
+
     <!-- The selected table, or the selected collection while the picker is open. -->
     <section id="panel" class="panel">
+      <div id="table-cabinet" class="table-cabinet" hidden>
+        <img id="table-cabinet-img" src="" alt="" />
+      </div>
       <h1 id="title"></h1>
       <p id="authors"></p>
       <p id="facts" class="facts"></p>

@@ -1,4 +1,4 @@
-// CommunityMOD - the playfield picture full screen, an arc of wheels across the top and a panel
+// Trinidad - the playfield picture full screen, an arc of wheels across the top and a panel
 // about the selected table.
 //
 // This file does four things, in this order: read the options, draw the wheel, draw the
@@ -9,6 +9,11 @@
 const vpin = new VPinFECore();
 window.vpin = vpin;                  // core and its overlays look for this name
 window.receiveEvent = receiveEvent;  // core delivers every message through this one
+
+const NAV_LETTERS_MS = 1200;
+let navLettersTimer = null;
+let navLettersActive = false;
+let lastCabinetLetter = null;
 
 start();
 
@@ -36,6 +41,25 @@ async function start() {
 
   draw();
   document.body.dataset.ready = "true";
+}
+
+function triggerNavLetters() {
+  navLettersActive = true;
+  if (navLettersTimer) clearTimeout(navLettersTimer);
+  navLettersTimer = setTimeout(() => {
+    navLettersActive = false;
+    updateNavLettersVisibility();
+  }, NAV_LETTERS_MS);
+  updateNavLettersVisibility();
+}
+
+function hideNavLetters() {
+  navLettersActive = false;
+  if (navLettersTimer) {
+    clearTimeout(navLettersTimer);
+    navLettersTimer = null;
+  }
+  updateNavLettersVisibility();
 }
 
 // --- 1. Options ---------------------------------------------------------------------
@@ -156,11 +180,69 @@ const runtimeEl = document.getElementById("runtime");
 const startsEl = document.getElementById("starts");
 const instructionsBoxEl = document.getElementById("table-instructions");
 const instructionsImgEl = document.getElementById("table-instructions-img");
+const cabinetBoxEl = document.getElementById("table-cabinet");
+const cabinetImgEl = document.getElementById("table-cabinet-img");
+const navLetterEl = document.getElementById("nav-letter");
 const makerImgEl = document.getElementById("maker-logo-img");
 const makerBoxEl = makerImgEl ? makerImgEl.closest(".manufacturer-logo") : null;
 const panelEl = document.getElementById("panel");
 const artEl = document.getElementById("art");
 const emptyEl = document.getElementById("empty");
+
+function updateNavLettersVisibility() {
+  if (!navLetterEl) return;
+  const hasSrc = Boolean(navLetterEl.getAttribute("src"));
+  navLetterEl.hidden = !hasSrc;
+  navLetterEl.classList.toggle("is-visible", navLettersActive && hasSrc);
+}
+
+function getFirstLetterSlug(text) {
+  const cleaned = String(text || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const match = cleaned.match(/[a-z0-9]/);
+  return match ? match[0] : "";
+}
+
+function drawCabinetLetters(entry) {
+  if (!navLetterEl) return;
+
+  const tableName =
+    (entry && entry.game && entry.game.name) ||
+    (entry && entry.table && entry.table.name) ||
+    "";
+  const letter = getFirstLetterSlug(tableName);
+
+  if (!entry || !letter) {
+    lastCabinetLetter = null;
+    hideNavLetters();
+    navLetterEl.removeAttribute("src");
+    navLetterEl.hidden = true;
+    return;
+  }
+
+  // Solo disparamos la letra cuando hay una letra previa y cambia a otra distinta
+  if (lastCabinetLetter !== null && letter !== lastCabinetLetter) {
+    triggerNavLetters();
+  }
+  lastCabinetLetter = letter;
+
+  const url = `img/letters/${encodeURIComponent(letter)}.png`;
+
+  navLetterEl.onerror = () => {
+    navLetterEl.removeAttribute("src");
+    navLetterEl.hidden = true;
+    navLetterEl.classList.remove("is-visible");
+  };
+  navLetterEl.onload = () => {
+    updateNavLettersVisibility();
+  };
+
+  navLetterEl.src = url;
+  updateNavLettersVisibility();
+}
 
 function drawSelection(list) {
   const empty = list.length === 0;
@@ -169,16 +251,23 @@ function drawSelection(list) {
   panelEl.hidden = empty;
   if (empty) {
     stage.dataset.view = "tables";
+    hideNavLetters();
     drawManufacturer("");
     drawInstructions(null, -1);
+    drawCabinet(null, -1);
+    drawCabinetLetters(null);
     artFader.clear();
     return;
   }
 
   const picking = list.kind === "collection";
   stage.dataset.view = picking ? "collections" : "tables";
-  if (picking) drawCollection(list.current);
-  else drawTable(list.current, list.cursor);
+  if (picking) {
+    hideNavLetters();
+    drawCollection(list.current);
+  } else {
+    drawTable(list.current, list.cursor);
+  }
 
   panelEl.classList.remove("entering");
   panelEl.offsetWidth;
@@ -244,6 +333,8 @@ function drawTable(entry, index) {
   drawFacts([game.manufacturer, game.year, game.type]);
   drawManufacturer(game.manufacturer);
   drawInstructions(entry, index);
+  drawCabinet(entry, index);
+  drawCabinetLetters(entry);
 
   if (myRatingEl) myRatingEl.textContent = stars(user.rating);
   if (communityRatingEl) communityRatingEl.textContent = stars(communityRating(entry));
@@ -262,6 +353,8 @@ function drawCollection(row) {
   drawFacts([row.is_filter ? vpin.t("theme.filter", "Filter") : vpin.t("theme.collection", "Collection")]);
   drawManufacturer("");
   drawInstructions(null, -1);
+  drawCabinet(null, -1);
+  drawCabinetLetters(null);
 
   artFader.show("backdrop", () => {
     const node = image("img/collection_background.png");
@@ -310,6 +403,70 @@ function drawInstructions(entry, index) {
 
   instructionsBoxEl.hidden = true;
   instructionsImgEl.removeAttribute("src");
+}
+
+function drawCabinet(entry, index) {
+  if (!cabinetBoxEl || !cabinetImgEl) return;
+
+  if (!entry || index < 0) {
+    cabinetBoxEl.hidden = true;
+    cabinetImgEl.removeAttribute("src");
+    return;
+  }
+
+  const mediaList = Array.isArray(entry.media) ? entry.media : [];
+  const candidateKinds = [
+    "cabinet",
+    "cab",
+    "cabinet_image",
+    "cabinet_art",
+    "thumbnail",
+    "thumb"
+  ];
+
+  const foundKind = candidateKinds.find((kind) => mediaList.includes(kind));
+  let url = "";
+
+  if (foundKind) {
+    const mediaObj = typeof vpin.getMedia === "function" ? vpin.getMedia(index, foundKind) : null;
+    url =
+      (mediaObj && mediaObj.url) ||
+      (typeof vpin.getImageURL === "function" ? vpin.getImageURL(index, foundKind) : "");
+  }
+
+  if (!url) {
+    const baseName =
+      (entry.table && entry.table.name) ||
+      (entry.game && entry.game.name) ||
+      "";
+    const tableDir =
+      (entry.table && (entry.table.folder || entry.table.dir)) ||
+      (entry.game && (entry.game.folder || entry.game.dir)) ||
+      "";
+
+    if (baseName) {
+      const cleanName = String(baseName).replace(/\.(vpx|fpt|vbs)$/i, "");
+      const fileName = encodeURIComponent(`(Cabinet) ${cleanName}.png`);
+      url = tableDir
+        ? `${String(tableDir).replace(/\\/g, "/").replace(/\/+$/, "")}/${fileName}`
+        : fileName;
+    }
+  }
+
+  if (!url) {
+    cabinetBoxEl.hidden = true;
+    cabinetImgEl.removeAttribute("src");
+    return;
+  }
+
+  cabinetImgEl.onerror = () => {
+    cabinetBoxEl.hidden = true;
+    cabinetImgEl.removeAttribute("src");
+  };
+  cabinetImgEl.onload = () => {
+    cabinetBoxEl.hidden = false;
+  };
+  cabinetImgEl.src = url;
 }
 
 function drawManufacturer(manufacturer) {
